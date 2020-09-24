@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: commons-httpclient:commons-httpclient:4.3.5">
+    <CLASSES>
+      <root url="jar://D:/apache-maven-3.2.1/repository/commons-httpclient/commons-httpclient/4.3.5/commons-httpclient-4.3.5.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://D:/apache-maven-3.2.1/repository/commons-httpclient/commons-httpclient/4.3.5/commons-httpclient-4.3.5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://D:/apache-maven-3.2.1/repository/commons-httpclient/commons-httpclient/4.3.5/commons-httpclient-4.3.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

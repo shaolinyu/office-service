@@ -1,0 +1,1 @@
+{"actions": [{"method": "addWaterMark","args": { "abscissa": "20", "ordinate": "20", "waterMarkCode": "t","waterMarkName":"1" }}],"targetFileName": "text1.docx"}
