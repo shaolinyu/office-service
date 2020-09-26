@@ -1,34 +1,22 @@
 package cn.innoway;
 
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class CacheTest {
 
+    private static BlockingQueue<String> blockingQueue = new ArrayBlockingQueue<>(4);
+
     public static void main(String[] args){
 
-        String str = "hello world";
-        while (true){
-            str.intern();
+        blockingQueue.offer("k1");
+        blockingQueue.offer("k2");
+        blockingQueue.offer("k3");
+        blockingQueue.offer("k4");
+        while (!blockingQueue.isEmpty()) {
+            System.out.println(blockingQueue.poll());
         }
-
-//        Cache<Object, Object> cache = CacheBuilder.newBuilder().maximumSize(11000).
-//                expireAfterWrite(60, TimeUnit.SECONDS).build();
-//        for (int i = 0; i < 10000; i++) {
-//            cache.put(UUID.randomUUID().toString().substring(0, 8),
-//                    System.currentTimeMillis());
-//        }
-//        System.out.println(cache.asMap());
-//        try {
-//            TimeUnit.SECONDS.sleep(110);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        System.out.println(cache.asMap());
 
     }
 

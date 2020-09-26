@@ -53,7 +53,8 @@ public class MsWordService{
     final String extension = Files.getFileExtension(fileName);
     return ("doc".equals(extension) || "docx".equals(extension)
             || "xls".equals(extension) || "xlsx".equals(extension)
-            || "ppt".equals(extension) || "pptx".equals(extension));
+            || "ppt".equals(extension) || "pptx".equals(extension)
+            || "pdf".equals(extension));
   }
 
   /**
@@ -63,9 +64,9 @@ public class MsWordService{
    *          if di splay window of Word
    */
   public void startWord(final boolean showWindow) {
-    /*if (objWord != null ){
+    if (objWord != null ){
       return;
-    }*/
+    }
 
     // Instantiate objWord
     objWord = new ActiveXComponent("Word.Application");
@@ -104,6 +105,7 @@ public class MsWordService{
    */
   public void close(final boolean save) {
     Dispatch.call(document, "Close", new Variant(save));
+    objWord = null;
   }
 
   /**

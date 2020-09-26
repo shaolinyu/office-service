@@ -44,12 +44,15 @@ public class OfficeController {
 
   private final boolean showWordWindow;
 
+  private final String waterMarkPath;
+
   private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
   @Autowired
   public OfficeController(final AppProperties appProperties) {
     tempDocAbsPath = new File(appProperties.getTempDocPath()).getAbsolutePath();
     showWordWindow = appProperties.getShowWordWindow();
+    waterMarkPath = appProperties.getPicturePath();
     initServiceQueue(appProperties.getWordInstanceCount());
     initExcelQueue(appProperties.getWordInstanceCount());
     initPPtQueue(appProperties.getWordInstanceCount());
@@ -224,6 +227,93 @@ public class OfficeController {
   }
 
     /**
+     * 调用excel服务类
+     * @param excelService
+     * @param wordProcessing
+     * @param sourceFilePath 原路径
+     * @param targetFilePath 目标路径
+     */
+  public void callExcelService(final  MsExcelService excelService,
+                               final WordProcessing wordProcessing,
+                               final String sourceFilePath,
+                               final String targetFilePath){
+      excelService.OpenExcel(sourceFilePath, null);
+      for (final WordProcessing.Action action: wordProcessing.getActions()) {
+          final  BiConsumer<MsExcelService, Map<String, String>> method =
+                  MsExcelService.getMethod(action.getMethod());
+          if (method == null){
+              continue;
+          }
+          method.accept(excelService, action.getArgs());
+      }
+      excelService.CloseExcel(targetFilePath);
+  }
+
+    /**
+     * 调用ppt服务类
+     * @param wordProcessing
+     * @param sourceFilePath 原路径
+     * @param targetFilePath 目标路径
+     */
+    public void callPPtService(final MsPPtService pPtService,
+                                 final WordProcessing wordProcessing,
+                                 final String sourceFilePath,
+                                 final String targetFilePath){
+        pPtService.openDocument(sourceFilePath);
+        for (final WordProcessing.Action action: wordProcessing.getActions()) {
+            final  BiConsumer<MsPPtService, Map<String, String>> method =
+                    MsPPtService.getMethod(action.getMethod());
+            if (method == null){
+                continue;
+            }
+            method.accept(pPtService, action.getArgs());
+        }
+        pPtService.closeAndSavePpt(targetFilePath);
+    }
+    /**
+     * ppt操作水印
+     */
+  @PostMapping("/ppt-documents")
+  public  void processPPtDocument(@RequestParam("processing") final WordProcessing wordProcessing,
+                                  @RequestPart("file") final MultipartFile file,
+                                  final HttpServletRequest request,
+                                  final HttpServletResponse response) throws IOException {
+
+      logger.debug("开始处理PPT*****************");
+      final long begin = System.currentTimeMillis();
+      //文件校验
+      fileCommon(wordProcessing, file);
+      String targetFileName = wordProcessing.getTargetFileName();
+      // 文件存于临时文档目录下，按日期分子目录，文件名前缀以JVM时间
+      final String tempPrefix = String.valueOf(System.nanoTime());
+      final String sourceFilePath = tempDocAbsPath + File.separator + datePath + File.separator
+              + tempPrefix + "_" + file.getOriginalFilename();
+      final String targetFilePath = tempDocAbsPath + File.separator + datePath + File.separator
+              + tempPrefix + "_" + targetFileName;
+
+      final Thread c = Thread.currentThread();
+
+      // 保存文件到临时目录，若保存出错抛出 IOException
+      file.transferTo(Paths.get(sourceFilePath));
+
+      // 从队列中取WORD服务
+      final MsPPtService pPtService = takePPtService();
+
+      logger.debug("==> {} ({}) before serviceQueue.take", c.getName(), c.getId());
+
+      callPPtService(pPtService, wordProcessing, sourceFilePath, targetFilePath);
+
+      putPPtService(pPtService);
+
+      logger.debug("==> {} ({}) msWordService put", c.getName(), c.getId());
+      logger.debug("==> {} converted to {} in {} ms", file.getOriginalFilename(),
+              Files.getFileExtension(targetFileName), System.currentTimeMillis() - begin);
+
+       // 回送文件
+      serveResource(targetFilePath, targetFileName, request, response);
+  }
+
+    /**
      * excel 文档操作
      */
   @PostMapping("/excel-documents")
@@ -259,9 +349,7 @@ public class OfficeController {
 
       logger.debug("==> {} ({}) offerService taken", c.getName(), c.getId());
 
-      xlsService.OpenExcel(sourceFilePath, showWordWindow, null);
-      xlsService.setBlackGroudPrituce();
-      xlsService.CloseExcel(targetFilePath);
+      callExcelService(xlsService, wordProcessing, sourceFilePath, targetFilePath);
 
       // 把服务放回到队列中
       putExlService(xlsService);
@@ -424,7 +512,12 @@ public class OfficeController {
 
   }
 
-
+    /**
+     * 校验文件
+     * @param wordProcessing
+     * @param file
+     * @throws IOException
+     */
   public void fileCommon(WordProcessing wordProcessing, MultipartFile file) throws IOException {
       final LocalDate now = LocalDate.now();
       // 请求有效性检查

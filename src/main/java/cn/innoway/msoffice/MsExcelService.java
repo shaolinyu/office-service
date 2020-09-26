@@ -1,14 +1,25 @@
 package cn.innoway.msoffice;
 
+import com.google.common.collect.ImmutableMap;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.ComThread;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 
 public class MsExcelService{
+
+
+    private static  final BiConsumer<MsExcelService, Map<String, String>> METHOD_PICTURE = MsExcelService::addWaterMark;
+
+    private static  final Map<String, BiConsumer<MsExcelService, Map<String, String>>> METHODS =
+            ImmutableMap.of("addWaterMark", METHOD_PICTURE);
 
     private static ActiveXComponent xl = null; //Excel对象(防止打开多个)
     private static Dispatch workbooks = null;  //工作簿对象
@@ -16,22 +27,42 @@ public class MsExcelService{
     private Dispatch sheets = null;// 获得sheets集合对象
     private Dispatch currentSheet = null;// 当前sheet
 
+    public static BiConsumer<MsExcelService, Map<String, String>> getMethod(final  String method){
+        return METHODS.get(method);
+    }
+
+    private static final List<String> methodList = Arrays.asList("addWaterMark");
+
+    /**
+     * 文档操作方法是否有效
+     *
+     * @param method
+     *          方法名
+     * @return true = 有效
+     */
+    public boolean isMethodValid(final String method) {
+        return methodList.contains(method);
+    }
+
     /**
      * 打开excel文件
-     * @param filepath 文件路径名称
+     * @param filePath 文件路径名称
      * @param password 表密码
+     *                 String filepath, boolean visible, String password
      */
-    public void OpenExcel(String filepath, boolean visible, String password) {
+    public void OpenExcel(String filePath, String password) {
+        if(xl != null){
+            return;
+        }
         try {
-            initComponents(); //清空原始变量
+            //initComponents(); //清空原始变量
             ComThread.InitSTA();
-            if(xl==null)
-                xl = new ActiveXComponent("Excel.Application"); //Excel对象
-            xl.setProperty("Visible", new Variant(visible));//设置是否显示打开excel
-            if(workbooks==null)
-                workbooks = xl.getProperty("Workbooks").toDispatch(); //打开具体工作簿
+            //if(xl==null)
+            xl = new ActiveXComponent("Excel.Application"); //Excel对象
+            //xl.setProperty("Visible", new Variant(true));//设置是否显示打开excel
+            workbooks = xl.getProperty("Workbooks").toDispatch(); //打开具体工作簿
             workbook = Dispatch.invoke(workbooks, "Open", Dispatch.Method,
-                    new Object[] { filepath,
+                    new Object[] { filePath,
                             new Variant(true), // 是否以只读方式打开
                             new Variant(false),
                             "1",
@@ -39,7 +70,7 @@ public class MsExcelService{
                     new int[1]).toDispatch();
         } catch (Exception e) {
             e.printStackTrace();
-            releaseSource();
+            //releaseSource();
         }
     }
 
@@ -47,6 +78,7 @@ public class MsExcelService{
      * 初始化
      * */
     private void initComponents(){
+        xl = null;
         workbook = null;
         currentSheet = null;
         sheets = null;
@@ -85,6 +117,7 @@ public class MsExcelService{
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            initComponents();
             releaseSource();
         }
     }
@@ -168,25 +201,29 @@ public class MsExcelService{
     /**
      * 给所有的sheet添加背景
      */
-    public void setBlackGroudPrituce()
-    {
-        int num=this.getSheetCount();
-        for (int i = 1; i <= num; i++) {
-            Dispatch sheets=this.getSheetByIndex(i);
-            Dispatch shapes =  Dispatch.get(sheets, "Shapes").toDispatch();
-            //添加水印
-            // 首位 水印大小
-            // 第二行 200 横坐标  纵坐标
-            Dispatch.call(shapes, "AddTextEffect",
-                    new Variant(0),"摩卡软件","宋体",
-                    new Variant(30),new Variant(0),new Variant(1),
-                    new Variant(200),new Variant(200)).toDispatch();
-            Dispatch.call(shapes, "AddTextEffect",
-                    new Variant(0),"摩卡软件","宋体",
-                    new Variant(30),new Variant(0),new Variant(1),
-                    new Variant(400),new Variant(400)).toDispatch();
-
-            //Dispatch.call(sheets,"SetBackgroundPicture",filepath);
+    public boolean addWaterMark(Map<String, String> map) {
+        String waterContent = map.get("waterContent");
+        String size = map.get("size");
+        String left = map.get("left");
+        String right = map.get("right");
+        int num = this.getSheetCount();
+        try {
+            for (int i = 1; i <= num; i++) {
+                Dispatch sheets=this.getSheetByIndex(i);
+                Dispatch shapes =  Dispatch.get(sheets, "Shapes").toDispatch();
+                //添加水印
+                // 首位 水印大小
+                // 第二行 200 横坐标  纵坐标
+                Dispatch.call(shapes, "AddTextEffect",
+                        new Variant(0),waterContent,"宋体",
+                        new Variant(size),new Variant(0),new Variant(1),
+                        new Variant(left),new Variant(right)).toDispatch();
+                //Dispatch.call(sheets,"SetBackgroundPicture",filepath);
+            }
+            return true;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
         }
     }
     /**

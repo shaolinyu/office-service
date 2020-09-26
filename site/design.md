@@ -57,6 +57,10 @@ Content-Type: application/msword
 
 {"actions": [{"method": "addWaterMark","args": { "abscissa": "20", "ordinate": "20", "waterMarkCode": "t","waterMarkName":"1" }}],"targetFileName": "text1.docx"}
 
+{"actions": [{"method": "addWaterMark","args": {"waterContent":"添加水印","size":"30","left":"200","right":"300" }}],"targetFileName": "text1.xls"}
+
+{"actions": [{"method": "addWaterMark","args": {"waterContent":"添加水印","size":"30","left":"200","right":"300" }}],"targetFileName": "text1.ppt"}
+
 操作内容`processing`的请求体是一个序列化的JSON对象，定义例子如下：
 
 ```
