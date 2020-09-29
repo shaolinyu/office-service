@@ -87,7 +87,8 @@ public class OfficeController {
                 // 生成服务对象
                 for (int i = 0; i < size; i++) {
                     if (!excelQueue.offer(new MsExcelService())) {
-                        throw new RuntimeException("Impossible! Unable to add MsExcelService into queue.");
+                        throw new RuntimeException("Impossible! Unable to " +
+                                "add MsExcelService into queue.");
                     }
                 }
                 logger.info("==> # of excel instances: {}", serviceQueue.size());
@@ -113,7 +114,7 @@ public class OfficeController {
   private MsWordService takeService() {
     for (int tries = 3; tries > 0; tries--) {
       try {
-        // 从队列中取服务，若队列空将等待
+          // 从队列中取服务，若队列空将等待
         final MsWordService msWordService = serviceQueue.take();
         return msWordService;
       } catch (final InterruptedException e) {
@@ -462,22 +463,24 @@ public class OfficeController {
       throw new RuntimeException("File '" + filePath + "' cannot be read");
     }
 
-    try (final InputStream in = new FileInputStream(file)) {
-      response.reset();
-      final String mimeType = request.getServletContext().getMimeType(filePath);
-      response.setHeader("Content-Type", mimeType);
-      response.setHeader("content-disposition",
-          "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
-      response.setContentLength((int) fileLength);
+    try (
+            final InputStream in = new FileInputStream(file)
+        ) {
+          response.reset();
+          final String mimeType = request.getServletContext().getMimeType(filePath);
+          response.setHeader("Content-Type", mimeType);
+          response.setHeader("content-disposition",
+              "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+          response.setContentLength((int) fileLength);
+          ByteStreams.copy(in, response.getOutputStream());
 
-      ByteStreams.copy(in, response.getOutputStream());
     } catch (final UnsupportedEncodingException e) {
-      // 这个不可能，忽略了
-        logger.error("UnsupportedEncodingException:{}",e);
-    } catch (final IOException e) {
-      // 可能是客户端关掉了连接
-      logger.warn("Oops! {}", e.getCause());
-    }
+          // 这个不可能，忽略了
+            logger.error("UnsupportedEncodingException:{}",e);
+        } catch (final IOException e) {
+          // 可能是客户端关掉了连接
+          logger.warn("Oops! {}", e.getCause());
+        }
   }
 
   /**

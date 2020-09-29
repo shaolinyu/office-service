@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class AppProperties {
 
   //图片绝对地址
-  private String picturePath = "office_service_temp/docs/1.png";
+  private String picturePath = "office_service_temp/docs/water.png";
   //private String picturePath;
 
   // 临时目录默认为当前运行目录下的子目录 office_service_temp

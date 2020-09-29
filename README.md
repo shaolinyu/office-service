@@ -51,6 +51,7 @@ curl --location --request POST "http://192.9.200.121:8080/watermark-documents" ^
 注，命令中的"^"符号为Windows命令的续行符。
 
 最后，打开 “`转换结果.pdf`” 文件，看看在指定书签处是否有2020、5和25等3处文本。
+
 ### 服务接口说明
 
 Word文档操作服务接口采用 Rest API 方式，使用POST方法，请求体用`multipart/form-data`封装，其中包括了操作内容和文件内容。
@@ -58,6 +59,59 @@ Word文档操作服务接口采用 Rest API 方式，使用POST方法，请求�
 文件块的标识名称为`file`，源文件名由 `filename` 属性指定，源文件必须是Word文档格式，后缀名为 `.doc` 或 `.docx`。
 
 操作内容块 `processing` 的JSON对象属性说明如下：
+
+1、word接口 http://127.0.0.1:8080/word-documents
+说明：仅支持图片水印，运行jar包后，将水印图片放入office_service_temp\docs\water.png
+参数说明： file(上传文件) , processing
+```
+{
+"actions":[
+{
+"method":"addWaterMark", //调用方法
+"args":{
+"abscissa":"100", //横坐标
+"ordinate":"350" //纵坐标
+}
+}
+],
+"targetFileName":"new.doc"  //另存为文件名
+}
+
+```
+2、excel接口说明 http://127.0.0.1:8080/excel-documents
+```
+{
+"actions":[
+{
+"method":"addWaterMark",
+"args":{
+"waterContent":"水印名称", 添加水印的字
+"size":"20", 大小
+"left":"200", 横坐标
+"right":"300" 纵坐标
+}
+}
+],
+"targetFileName":"new.xlsx"
+}
+```
+3、ppt接口说明  http://127.0.0.1:8080/ppt-documents
+````
+{
+"actions":[
+{
+"method":"addWaterMark",
+"args":{
+"waterContent":"水印名称",
+"size":"30",
+"left":"200",
+"right":"300"
+}
+}
+],
+"targetFileName":"max111.ppt"
+}
+````
 
 ```
 {
